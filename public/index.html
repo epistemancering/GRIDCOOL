@@ -287,7 +287,7 @@ function display(positions) {
     if (positions[1].y === positions[2].y) {
         if (positions[1].x < positions[2].x) {
             if (positions[1].direction === "east") {
-                grid[positions[2].y].children[positions[2].x].style.blur = "1vh"
+                grid[positions[2].y].children[positions[2].x].style.filter = "blur(.5vh)"
                 let index = positions[1].x
                 while (++index !== positions[2].x) {
                     grid[positions[1].y].children[index].innerHTML = "-"
@@ -295,7 +295,7 @@ function display(positions) {
                 player = undefined
             }
             if (positions[2].direction === "west") {
-                grid[positions[1].y].children[positions[1].x].style.blur = "1vh"
+                grid[positions[1].y].children[positions[1].x].style.filter = "blur(.5vh)"
                 let index = positions[1].x
                 while (++index !== positions[2].x) {
                     grid[positions[1].y].children[index].innerHTML = "-"
@@ -304,7 +304,7 @@ function display(positions) {
             }
         } else {
             if (positions[1].direction === "west") {
-                grid[positions[2].y].children[positions[2].x].style.blur = "1vh"
+                grid[positions[2].y].children[positions[2].x].style.filter = "blur(.5vh)"
                 let index = positions[2].x
                 while (++index !== positions[1].x) {
                     grid[positions[1].y].children[index].innerHTML = "-"
@@ -312,7 +312,7 @@ function display(positions) {
                 player = undefined
             }
             if (positions[2].direction === "east") {
-                grid[positions[1].y].children[positions[1].x].style.blur = "1vh"
+                grid[positions[1].y].children[positions[1].x].style.filter = "blur(.5vh)"
                 let index = positions[2].x
                 while (++index !== positions[1].x) {
                     grid[positions[1].y].children[index].innerHTML = "-"
