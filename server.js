@@ -57,6 +57,12 @@ api.put("/move", async function(request, response) {
                 }
                 rooms[request.query.room][future][index].direction = rooms[request.query.room][present][index].move
             }
+            if (rooms[request.query.room][future][1].x === rooms[request.query.room][future][2].x && rooms[request.query.room][future][1].y === rooms[request.query.room][future][2].y) {
+                rooms[request.query.room][future][1].x = rooms[request.query.room][present][1].x
+                rooms[request.query.room][future][1].y = rooms[request.query.room][present][1].y
+                rooms[request.query.room][future][2].x = rooms[request.query.room][present][2].x
+                rooms[request.query.room][future][2].y = rooms[request.query.room][present][2].y
+            }
             response.send(rooms[request.query.room][future])
         } else {
             response.send()
