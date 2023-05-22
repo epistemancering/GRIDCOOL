@@ -1,0 +1,422 @@
+<!doctypehtml>
+<html>
+<head>
+<style>
+table {border-collapse: collapse; table-layout: fixed}
+td {border-style: solid; border-width: 1vh; cursor: default; padding: 0}
+tr {height: 10vh}
+</style>
+<title>
+    GRIDCOOL
+</title>
+</head>
+
+<body style = "border-collapse: collapse; font-family: monospace; line-height: 1; margin: 0; text-align: center">
+<div id = "random"></div>
+<table style = "font-size: 16vh; margin-bottom: 1vh; width: 100%">
+    <td>
+        G
+    </td>
+    <td>
+        R
+    </td>
+    <td>
+        I
+    </td>
+    <td>
+        D
+    </td>
+    <td>
+        C
+    </td>
+    <td>
+        O
+    </td>
+    <td>
+        O
+    </td>
+    <td>
+        L
+    </td>
+</table>
+<table id = "grid" style = "font-size: 8vh; margin: auto; width: 81vh">
+    <tr>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+    </tr>
+    <tr>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            w
+        </td>
+        <td>
+            a
+        </td>
+        <td>
+            i
+        </td>
+        <td>
+            t
+        </td>
+        <td>
+            i
+        </td>
+        <td>
+            n
+        </td>
+        <td>
+            g
+        </td>
+        <td>
+        </td>
+    </tr>
+    <tr>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+            f
+        </td>
+        <td>
+            o
+        </td>
+        <td>
+            r
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            o
+        </td>
+        <td>
+            p
+        </td>
+        <td>
+            p
+        </td>
+        <td>
+            o
+        </td>
+        <td>
+            n
+        </td>
+        <td>
+            e
+        </td>
+        <td>
+            n
+        </td>
+        <td>
+            t
+        </td>
+    </tr>
+    <tr>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+            .
+        </td>
+        <td>
+            .
+        </td>
+        <td>
+            .
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+    </tr>
+    <tr>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+    </tr>
+    <tr>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+    </tr>
+</table>
+
+<script src = "https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js">
+</script>
+<script>
+function connect() {
+    axios.get("/start/" + room).then(function(response) {
+        if (response.data[1]) {
+            console.log("managed to start game")
+            display(response.data)
+        } else {
+            console.log("trying again to start game")
+            connect()
+        }
+    })
+}
+function display(positions) {
+    console.log("playing in room " + room + " as player " + player)
+    console.log(positions)
+    let index1 = 8
+    while (index1--) {
+        let index2 = 8
+        while (index2--) {
+            grid[index1].children[index2].innerHTML = ""
+            grid[index1].children[index2].style.color = ""
+            grid[index1].children[index2].style.cursor = ""
+        }
+    }
+    grid[positions[1].y].children[positions[1].x].style.color = "lime"
+    grid[positions[2].y].children[positions[2].x].style.color = "red"
+    let index = 3
+    while (--index) {
+        if (positions[index].direction === "north") {
+            grid[positions[index].y].children[positions[index].x].innerHTML = "^"
+        } else if (positions[index].direction === "east") {
+            grid[positions[index].y].children[positions[index].x].innerHTML = ">"
+        } else if (positions[index].direction === "south") {
+            grid[positions[index].y].children[positions[index].x].innerHTML = "v"
+        } else {
+            grid[positions[index].y].children[positions[index].x].innerHTML = "<"
+        }
+    }
+    if (positions[1].x === positions[2].x) {
+        if (positions[1].y < positions[2].y) {
+            if (positions[1].direction === "south") {
+                grid[positions[2].y].children[positions[2].x].style.filter = "blur(.5vh)"
+                let index = positions[1].y
+                while (++index !== positions[2].y) {
+                    grid[index].children[positions[1].x].innerHTML = "|"
+                }
+                player = undefined
+            }
+            if (positions[2].direction === "north") {
+                grid[positions[1].y].children[positions[1].x].style.filter = "blur(.5vh)"
+                let index = positions[1].y
+                while (++index !== positions[2].y) {
+                    grid[index].children[positions[1].x].innerHTML = "|"
+                }
+                player = undefined
+            }
+        } else {
+            if (positions[1].direction === "north") {
+                grid[positions[2].y].children[positions[2].x].style.filter = "blur(.5vh)"
+                let index = positions[2].y
+                while (++index !== positions[1].y) {
+                    grid[index].children[positions[1].x].innerHTML = "|"
+                }
+                player = undefined
+            }
+            if (positions[2].direction === "south") {
+                grid[positions[1].y].children[positions[1].x].style.filter = "blur(.5vh)"
+                let index = positions[2].y
+                while (++index !== positions[1].y) {
+                    grid[index].children[positions[1].x].innerHTML = "|"
+                }
+                player = undefined
+            }
+        }
+    }
+    if (positions[1].y === positions[2].y) {
+        if (positions[1].x < positions[2].x) {
+            if (positions[1].direction === "east") {
+                grid[positions[2].y].children[positions[2].x].style.blur = "1vh"
+                let index = positions[1].x
+                while (++index !== positions[2].x) {
+                    grid[positions[1].y].children[index].innerHTML = "-"
+                }
+                player = undefined
+            }
+            if (positions[2].direction === "west") {
+                grid[positions[1].y].children[positions[1].x].style.blur = "1vh"
+                let index = positions[1].x
+                while (++index !== positions[2].x) {
+                    grid[positions[1].y].children[index].innerHTML = "-"
+                }
+                player = undefined
+            }
+        } else {
+            if (positions[1].direction === "west") {
+                grid[positions[2].y].children[positions[2].x].style.blur = "1vh"
+                let index = positions[2].x
+                while (++index !== positions[1].x) {
+                    grid[positions[1].y].children[index].innerHTML = "-"
+                }
+                player = undefined
+            }
+            if (positions[2].direction === "east") {
+                grid[positions[1].y].children[positions[1].x].style.blur = "1vh"
+                let index = positions[2].x
+                while (++index !== positions[1].x) {
+                    grid[positions[1].y].children[index].innerHTML = "-"
+                }
+                player = undefined
+            }
+        }
+    }
+    if (player) {
+        if (positions[player].y) {
+            north = grid[positions[player].y - 1].children[positions[player].x]
+            north.addEventListener("click", move)
+            north.style.cursor = "pointer"
+            if (north.style.color === "") {
+                north.innerHTML = "^"
+            }
+        }
+        if (positions[player].x !== 7) {
+            east = grid[positions[player].y].children[positions[player].x + 1]
+            east.addEventListener("click", move)
+            east.style.cursor = "pointer"
+            if (east.style.color === "") {
+                east.innerHTML = ">"
+            }
+        }
+        if (positions[player].y !== 7) {
+            south = grid[positions[player].y + 1].children[positions[player].x]
+            south.addEventListener("click", move)
+            south.style.cursor = "pointer"
+            if (south.style.color === "") {
+                south.innerHTML = "v"
+            }
+        }
+        if (positions[player].x) {
+            west = grid[positions[player].y].children[positions[player].x - 1]
+            west.addEventListener("click", move)
+            west.style.cursor = "pointer"
+            if (west.style.color === "") {
+                west.innerHTML = "<"
+            }
+        }
+    }
+}
+function move(event) {
+    let motion
+    if (event.target === north) {
+        motion = "north"
+    } else if (event.target === east) {
+        motion = "east"
+    } else if (event.target === south) {
+        motion = "south"
+    } else {
+        motion = "west"
+    }
+    let index1 = 8
+    while (index1--) {
+        let index2 = 8
+        while (index2--) {
+            if (grid[index1].children[index2].style.cursor === "pointer") {
+                grid[index1].children[index2].removeEventListener("click", move)
+                grid[index1].children[index2].style.cursor = "default"
+                if (grid[index1].children[index2].style.color === "") {
+                    grid[index1].children[index2].innerHTML = ""
+                }
+            }
+        }
+    }
+    axios.put("/move?room=" + room + "&player=" + player + "&move=" + motion).then(function(response) {
+        if (response.data) {
+            display(response.data)
+        } else {
+            ping()
+        }
+    })
+}
+function ping() {
+    axios.put("/move?room=" + room + "&player=" + player).then(function(response) {
+        if (response.data) {
+            display(response.data)
+        } else {
+            console.log("waiting for opponent...")
+            ping()
+        }
+    })
+}
+let room
+let player
+let grid = document.querySelector("#grid").children[0].children
+let north
+let east
+let south
+let west
+axios.get("/start").then(function(response) {
+    room = response.data.room
+    if (response.data.positions) {
+        player = 2
+        console.log("starting game straightaway")
+        display(response.data.positions)
+    } else {
+        player = 1
+        console.log("couldn't start game straightaway")
+        connect()
+    }
+})
+</script>
+</body>
+</html>
