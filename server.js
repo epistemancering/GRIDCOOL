@@ -13,14 +13,17 @@ api.get("/start", function(request, response) {
         response.send({ "room": newest })
     }
 })
-api.get("/start/:room", function(request, response) {
+api.get("/start/:room", async function(request, response) {
     if (rooms[request.params.room][0][2]) {
         response.send(rooms[request.params.room][0])
     } else {
+        await new Promise(function(resolution) {
+            setTimeout(resolution, 1000)
+        })
         response.send()
     }
 })
-api.put("/move", function(request, response) {
+api.put("/move", async function(request, response) {
     let present = rooms[request.query.room].length - 1
     let opponent
     if (request.query.player === "1") {
@@ -65,6 +68,9 @@ api.put("/move", function(request, response) {
         if (rooms[request.query.room][present][opponent].move) {
             response.send(rooms[request.query.room][present + 1])
         } else {
+            await new Promise(function(resolution) {
+                setTimeout(resolution, 1000)
+            })
             response.send()
         }
     }
