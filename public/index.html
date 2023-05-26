@@ -39,7 +39,7 @@
         L
     </div>
 </div>
-<div id = "grid" style = "flex-direction: column; font-size: 8vh; height: 80vh; width: 80vh;">
+<div id = "grid" style = "flex-direction: column-reverse; font-size: 8vh; height: 80vh; width: 80vh;">
     <div>
         <div>
         </div>
@@ -186,7 +186,7 @@
     </div>
 </div>
 
-<script src = "https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js">
+<script src = "axios.min.js">
 </script>
 <script>
 function message(text) {
@@ -194,7 +194,7 @@ function message(text) {
     text = text.slice(1).split("\n")
     for (let index1 in text) {
         for (let index2 in text[index1]) {
-            grid[index1].children[index2].innerHTML = text[index1][index2]
+            grid[7 - index1].children[index2].innerHTML = text[index1][index2]
         }
     }
 }
@@ -213,156 +213,57 @@ function display(positions) {
     console.log("playing in room " + room + " as player " + player)
     console.log(positions)
     blank()
-    grid[positions[1].y].children[positions[1].x].style.color = "lime"
-    grid[positions[2].y].children[positions[2].x].style.color = "red"
-    let index = 3
-    while (--index) {
-        if (positions[index].direction === "north") {
-            grid[positions[index].y].children[positions[index].x].innerHTML = "^"
-        } else if (positions[index].direction === "east") {
-            grid[positions[index].y].children[positions[index].x].innerHTML = ">"
-        } else if (positions[index].direction === "south") {
-            grid[positions[index].y].children[positions[index].x].innerHTML = "v"
-        } else {
-            grid[positions[index].y].children[positions[index].x].innerHTML = "<"
+    grid[positions[0].y].children[positions[0].x].style.color = "lime"
+    grid[positions[1].y].children[positions[1].x].style.color = "red"
+    for (let index in positions) {
+        grid[positions[index].y].children[positions[index].x].innerHTML = symbols[positions[index].axis][positions[index].direction]
+        if (positions[index].fire) {
+            let target = Number(!Number(index))
+            let trail = { "x": positions[index].x, "y": positions[index].y }
+            while ((trail[positions[index].axis] += positions[index].direction) !== positions[target][positions[index].axis]) {
+                grid[trail.y].children[trail.x].innerHTML = trails[positions[index].axis]
+            }
+            grid[trail.y].children[trail.x].style.filter = "blur(.5vh)"
+            room = undefined
         }
     }
-    if (positions[1].x === positions[2].x) {
-        if (positions[1].y < positions[2].y) {
-            if (positions[1].direction === "south") {
-                grid[positions[2].y].children[positions[2].x].style.filter = "blur(.5vh)"
-                let index = positions[1].y
-                while (++index !== positions[2].y) {
-                    grid[index].children[positions[1].x].innerHTML = "|"
+    if (room !== undefined) {
+        arrows = { "x": [], "y": [] }
+        for (let index1 in symbols) {
+            for (let index2 in symbols[index1]) {
+                let coordinates = { "x": positions[player].x, "y": positions[player].y }
+                if (grid[coordinates[index1] += Number(index2)]) {
+                    arrows[index1][index2] = grid[coordinates.y].children[coordinates.x]
+                    arrows[index1][index2].addEventListener("click", move)
+                    arrows[index1][index2].style.cursor = "pointer"
+                    if (!arrows[index1][index2].innerHTML) {
+                        arrows[index1][index2].innerHTML = symbols[index1][index2]
+                    }
                 }
-                player = undefined
-            }
-            if (positions[2].direction === "north") {
-                grid[positions[1].y].children[positions[1].x].style.filter = "blur(.5vh)"
-                let index = positions[1].y
-                while (++index !== positions[2].y) {
-                    grid[index].children[positions[1].x].innerHTML = "|"
-                }
-                player = undefined
-            }
-        } else {
-            if (positions[1].direction === "north") {
-                grid[positions[2].y].children[positions[2].x].style.filter = "blur(.5vh)"
-                let index = positions[2].y
-                while (++index !== positions[1].y) {
-                    grid[index].children[positions[1].x].innerHTML = "|"
-                }
-                player = undefined
-            }
-            if (positions[2].direction === "south") {
-                grid[positions[1].y].children[positions[1].x].style.filter = "blur(.5vh)"
-                let index = positions[2].y
-                while (++index !== positions[1].y) {
-                    grid[index].children[positions[1].x].innerHTML = "|"
-                }
-                player = undefined
-            }
-        }
-    }
-    if (positions[1].y === positions[2].y) {
-        if (positions[1].x < positions[2].x) {
-            if (positions[1].direction === "east") {
-                grid[positions[2].y].children[positions[2].x].style.filter = "blur(.5vh)"
-                let index = positions[1].x
-                while (++index !== positions[2].x) {
-                    grid[positions[1].y].children[index].innerHTML = "-"
-                }
-                player = undefined
-            }
-            if (positions[2].direction === "west") {
-                grid[positions[1].y].children[positions[1].x].style.filter = "blur(.5vh)"
-                let index = positions[1].x
-                while (++index !== positions[2].x) {
-                    grid[positions[1].y].children[index].innerHTML = "-"
-                }
-                player = undefined
-            }
-        } else {
-            if (positions[1].direction === "west") {
-                grid[positions[2].y].children[positions[2].x].style.filter = "blur(.5vh)"
-                let index = positions[2].x
-                while (++index !== positions[1].x) {
-                    grid[positions[1].y].children[index].innerHTML = "-"
-                }
-                player = undefined
-            }
-            if (positions[2].direction === "east") {
-                grid[positions[1].y].children[positions[1].x].style.filter = "blur(.5vh)"
-                let index = positions[2].x
-                while (++index !== positions[1].x) {
-                    grid[positions[1].y].children[index].innerHTML = "-"
-                }
-                player = undefined
-            }
-        }
-    }
-    if (player) {
-        if (positions[player].y) {
-            north = grid[positions[player].y - 1].children[positions[player].x]
-            north.addEventListener("click", move)
-            north.style.cursor = "pointer"
-            if (north.style.color === "") {
-                north.innerHTML = "^"
-            }
-        }
-        if (positions[player].x !== 7) {
-            east = grid[positions[player].y].children[positions[player].x + 1]
-            east.addEventListener("click", move)
-            east.style.cursor = "pointer"
-            if (east.style.color === "") {
-                east.innerHTML = ">"
-            }
-        }
-        if (positions[player].y !== 7) {
-            south = grid[positions[player].y + 1].children[positions[player].x]
-            south.addEventListener("click", move)
-            south.style.cursor = "pointer"
-            if (south.style.color === "") {
-                south.innerHTML = "v"
-            }
-        }
-        if (positions[player].x) {
-            west = grid[positions[player].y].children[positions[player].x - 1]
-            west.addEventListener("click", move)
-            west.style.cursor = "pointer"
-            if (west.style.color === "") {
-                west.innerHTML = "<"
             }
         }
     }
 }
 function move(event) {
-    let motion
-    if (event.target === north) {
-        motion = "north"
-    } else if (event.target === east) {
-        motion = "east"
-    } else if (event.target === south) {
-        motion = "south"
-    } else {
-        motion = "west"
-    }
-    let index1 = 8
-    while (index1--) {
-        let index2 = 8
-        while (index2--) {
-            if (grid[index1].children[index2].style.cursor === "pointer") {
-                grid[index1].children[index2].removeEventListener("click", move)
-                grid[index1].children[index2].style.cursor = ""
-                if (grid[index1].children[index2].style.color === "") {
-                    grid[index1].children[index2].innerHTML = ""
-                }
+    let axis
+    let direction
+    for (let index1 in arrows) {
+        for (let index2 in arrows[index1]) {
+            if (arrows[index1][index2] === event.target) {
+                axis = index1
+                direction = index2
+            }
+            arrows[index1][index2].removeEventListener("click", move)
+            arrows[index1][index2].style.cursor = ""
+            if (!arrows[index1][index2].style.color) {
+                arrows[index1][index2].innerHTML = ""
             }
         }
     }
-    axios.put("/move?room=" + room + "&player=" + player + "&move=" + motion).then(function(response) {
+    axios.put("/move?room=" + room + "&player=" + player + "&axis=" + axis + "&direction=" + direction).then(function(response) {
         display(response.data)
-    }).catch(function() {
+    }).catch(function(error) {
+        console.log(error)
         message(`
 
 no
@@ -377,10 +278,11 @@ refresh?
 let room
 let player
 let grid = document.querySelector("#grid").children
-let north
-let east
-let south
-let west
+let arrows
+let symbols = { "x": [, ">"], "y": [, "^"] }
+symbols.x[-1] = "<"
+symbols.y[-1] = "v"
+let trails = { "x": "-", "y": "|"}
 message(`
 
 
@@ -394,17 +296,18 @@ axios.get("/start").then(function(response) {
     room = response.data.room
     player = response.data.player
     display(response.data.positions)
-}).catch(function() {
-    message(`
-
-no
-opponent
-   found
-
-
-refresh?
-    `)
 })
+// .catch(function() {
+//     message(`
+
+// no
+// opponent
+//    found
+
+
+// refresh?
+//     `)
+// })
 </script>
 </body>
 </html>
