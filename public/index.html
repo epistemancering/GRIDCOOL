@@ -1,7 +1,7 @@
 <!doctypehtml>
 <html>
 <head>
-<link href = "" rel = "icon">
+<!-- <link href = "" rel = "icon"> -->
 <style>
 #title, #grid {border-style: solid; border-width: .5vh; cursor: default; display: flex; margin: auto;}
 #title div, div div div {border-style: solid; border-width: .5vh; width: 100%;}
@@ -209,8 +209,21 @@ function blank() {
         }
     }
 }
-function display(positions) {
-    console.log("playing in room " + room + " as player " + player)
+function start(response) {
+    if (response.data) {
+        room = response.data.room
+        if (response.data.positions) {
+            player = response.data.player
+            positions = response.data.positions
+            display()
+        } else {
+            axios.get("/start?room=" + room).then(start)
+        }
+    } else {
+        axios.get("/start").then(start)
+    }
+}
+function display() {
     console.log(positions)
     blank()
     grid[positions[0].y].children[positions[0].x].style.color = "lime"
@@ -242,11 +255,13 @@ function display(positions) {
                 }
             }
         }
+        grid[positions[player].y].children[positions[player].x].addEventListener("click", move)
+        grid[positions[player].y].children[positions[player].x].style.cursor = "pointer"
     }
 }
 function move(event) {
-    let axis
-    let direction
+    let axis = positions[player].axis
+    let direction = 0
     for (let index1 in arrows) {
         for (let index2 in arrows[index1]) {
             if (arrows[index1][index2] === event.target) {
@@ -260,23 +275,16 @@ function move(event) {
             }
         }
     }
+    grid[positions[player].y].children[positions[player].x].removeEventListener("click", move)
+    grid[positions[player].y].children[positions[player].x].style.cursor = ""
     axios.put("/move?room=" + room + "&player=" + player + "&axis=" + axis + "&direction=" + direction).then(function(response) {
-        display(response.data)
-    }).catch(function(error) {
-        console.log(error)
-        message(`
-
-no
-response
-   from
-opponent
-
-refresh?
-        `)
+        positions = response.data
+        display()
     })
 }
 let room
 let player
+let positions
 let grid = document.querySelector("#grid").children
 let arrows
 let symbols = { "x": [, ">"], "y": [, "^"] }
@@ -291,23 +299,7 @@ waiting
 opponent
      ...
 `)
-axios.get("/start").then(function(response) {
-    console.log(response)
-    room = response.data.room
-    player = response.data.player
-    display(response.data.positions)
-})
-// .catch(function() {
-//     message(`
-
-// no
-// opponent
-//    found
-
-
-// refresh?
-//     `)
-// })
+start({})
 </script>
 </body>
 </html>

@@ -1,15 +1,28 @@
 let rooms = []
-let newest = 0
 let host
+let newest = 0
 let firsts = []
 module.exports = {
     "start": function(request, response) {
-        if (rooms[newest]) {
-            rooms[newest][1] = { "x": 7, "y": 7, "axis": "x", "direction": -1 }
-            host.send({ "room": newest, "player": 0, "positions": rooms[newest] })
-            response.send({ "room": newest, "player": 1, "positions": rooms[newest++] })
+        if (firsts[request.query.room]) {
+            rooms[request.query.room] = [
+                { "x": 0, "y": 0, "axis": "x", "direction": 1 },
+                { "x": 7, "y": 7, "axis": "x", "direction": -1 }
+            ]
+            firsts[request.query.room].send({ "room": request.query.room, "player": 1, "positions": rooms[request.query.room] })
+            response.send({ "room": request.query.room, "player": 0, "positions": rooms[request.query.room] })
+        } else if (host) {
+            let room = newest++
+            host.send({ "room": room })
+            firsts[room] = response
+            host = undefined
+            setTimeout(function() {
+                if (!rooms[room]) {
+                    delete firsts[room]
+                    response.send()
+                }
+            }, 1000)
         } else {
-            rooms[newest] = [{ "x": 0, "y": 0, "axis": "x", "direction": 1 }]
             host = response
         }
     },
@@ -36,10 +49,12 @@ module.exports = {
                     rooms[request.query.room][0].bonk = rooms[request.query.room][1].bonk = true
                 } else {
                     for (let index in trajectories) {
-                        rooms[request.query.room][index].x = trajectories[index].x
-                        rooms[request.query.room][index].y = trajectories[index].y
-                        rooms[request.query.room][index].axis = rooms[request.query.room][index].move.axis
-                        rooms[request.query.room][index].direction = rooms[request.query.room][index].move.direction
+                        if (rooms[request.query.room][index].move.direction) {
+                            rooms[request.query.room][index].x = trajectories[index].x
+                            rooms[request.query.room][index].y = trajectories[index].y
+                            rooms[request.query.room][index].axis = rooms[request.query.room][index].move.axis
+                            rooms[request.query.room][index].direction = rooms[request.query.room][index].move.direction
+                        }
                     }
                 }
                 delete rooms[request.query.room][0].move
