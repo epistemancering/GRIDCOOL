@@ -193,6 +193,7 @@
         GitHub repository
     </a>
 </div>
+<input style = "display: none;">
 
 <script src = "axios.min.js">
 </script>
@@ -437,12 +438,12 @@ while (index1--) {
             } else if (state === "versus") {
                 display()
             } else if (state === "landing") {
-                if (target.y === 3) {
-                    if (grid[4].children[0].innerHTML) {
-                        introduce()
-                    }
-                } else if (target.y < 2) {
+                if (target.y < 2) {
                     document.querySelector("#what").style.display = ""
+                } else if (grid[4].children[0].innerHTML && target.y === 3) {
+                    introduce()
+                } else {
+                    document.querySelector("input").focus()
                 }
             }
         })
