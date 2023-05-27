@@ -1,88 +1,100 @@
 let rooms = []
-let host
 let newest = 0
-let firsts = []
+let channels = []
+let channel
+let name
+let hue
 module.exports = {
     "start": function(request, response) {
-        if (firsts[request.query.room]) {
-            rooms[request.query.room] = [
-                { "x": 0, "y": 0, "axis": "x", "direction": 1 },
-                { "x": 7, "y": 7, "axis": "x", "direction": -1 }
-            ]
-            firsts[request.query.room].send({ "room": request.query.room, "player": 1, "positions": rooms[request.query.room] })
-            response.send({ "room": request.query.room, "player": 0, "positions": rooms[request.query.room] })
-        } else if (host) {
+        if (channels[request.query.room]) {
+            rooms[request.query.room].positions = {}
+            let names = Object.keys(rooms[request.query.room].hues)
+            let left = Math.floor(2 * Math.random())
+            rooms[request.query.room].positions[names[left]] = { "x": 0, "y": 0, "axis": "x", "direction": 1 }
+            rooms[request.query.room].positions[names[Number(!left)]] = { "x": 7, "y": 7, "axis": "x", "direction": -1 }
+            channels[request.query.room].send({ "room": request.query.room, "hues": rooms[request.query.room].hues, "positions": rooms[request.query.room].positions })
+            response.send({ "room": request.query.room, "hues": rooms[request.query.room].hues, "positions": rooms[request.query.room].positions })
+        } else if (channel) {
             let room = newest++
-            host.send({ "room": room })
-            firsts[room] = response
-            host = undefined
+            rooms[room] = { "hues": {} }
+            rooms[room].hues[name] = hue
+            rooms[room].hues[request.query.name] = request.query.hue
+            channel.send({ "room": room })
+            channels[room] = response
+            channel = undefined
             setTimeout(function() {
-                if (!rooms[room]) {
-                    delete firsts[room]
+                if (!rooms[room].positions) {
+                    delete channels[room]
                     response.send()
                 }
             }, 1000)
         } else {
-            host = response
+            channel = response
+            name = request.query.name
+            hue = request.query.hue
         }
     },
     "move": function (request, response) {
         let direction = Number(request.query.direction)
         if ((request.query.axis === "x" || request.query.axis === "y") && (direction === -1 || direction === 0 || direction === 1)) {
-            delete rooms[request.query.room][request.query.player].bonk
-            rooms[request.query.room][request.query.player].move = { "axis": request.query.axis, "direction": direction }
-            if (rooms[request.query.room][Number(!Number(request.query.player))].move) {
-                let trajectories = [{}, {}]
-                for (let index in trajectories) {
-                    trajectories[index].x = rooms[request.query.room][index].x
-                    trajectories[index].y = rooms[request.query.room][index].y
-                    if (rooms[request.query.room][index].move.axis === rooms[request.query.room][index].axis && rooms[request.query.room][index].move.direction === rooms[request.query.room][index].direction) {
-                        let trajectory = trajectories[index][rooms[request.query.room][index].axis] + rooms[request.query.room][index].direction
+            delete rooms[request.query.room].positions[request.query.name].bonk
+            rooms[request.query.room].positions[request.query.name].move = { "axis": request.query.axis, "direction": direction }
+            let opponent
+            for (let index in rooms[request.query.room].hues) {
+                if (index !== request.query.name) {
+                    opponent = index
+                    break
+                }
+            }
+            if (rooms[request.query.room].positions[opponent].move) {
+                let trajectories = {}
+                for (let index in rooms[request.query.room].positions) {
+                    trajectories[index] = {}
+                    trajectories[index].x = rooms[request.query.room].positions[index].x
+                    trajectories[index].y = rooms[request.query.room].positions[index].y
+                    if (rooms[request.query.room].positions[index].move.axis === rooms[request.query.room].positions[index].axis && rooms[request.query.room].positions[index].move.direction === rooms[request.query.room].positions[index].direction) {
+                        let trajectory = trajectories[index][rooms[request.query.room].positions[index].axis] + rooms[request.query.room].positions[index].direction
                         if (trajectory === -1 || trajectory === 8) {
-                            rooms[request.query.room][index].bonk = true
+                            rooms[request.query.room].positions[index].bonk = true
                         } else {
-                            trajectories[index][rooms[request.query.room][index].axis] = trajectory
+                            trajectories[index][rooms[request.query.room].positions[index].axis] = trajectory
                         }
                     }
                 }
-                if (trajectories[0].x === trajectories[1].x && trajectories[0].y === trajectories[1].y) {
-                    rooms[request.query.room][0].bonk = rooms[request.query.room][1].bonk = true
+                if (trajectories[request.query.name].x === trajectories[opponent].x && trajectories[request.query.name].y === trajectories[opponent].y) {
+                    rooms[request.query.room].positions[request.query.name].bonk = rooms[request.query.room].positions[opponent].bonk = true
                 } else {
                     for (let index in trajectories) {
-                        if (rooms[request.query.room][index].move.direction) {
-                            rooms[request.query.room][index].x = trajectories[index].x
-                            rooms[request.query.room][index].y = trajectories[index].y
-                            rooms[request.query.room][index].axis = rooms[request.query.room][index].move.axis
-                            rooms[request.query.room][index].direction = rooms[request.query.room][index].move.direction
+                        if (rooms[request.query.room].positions[index].move.direction) {
+                            rooms[request.query.room].positions[index].x = trajectories[index].x
+                            rooms[request.query.room].positions[index].y = trajectories[index].y
+                            rooms[request.query.room].positions[index].axis = rooms[request.query.room].positions[index].move.axis
+                            rooms[request.query.room].positions[index].direction = rooms[request.query.room].positions[index].move.direction
                         }
                     }
                 }
-                delete rooms[request.query.room][0].move
-                delete rooms[request.query.room][1].move
-                for (let index1 in trajectories[0]) {
-                    if (rooms[request.query.room][0][index1] === rooms[request.query.room][1][index1]) {
-                        if (index1 === "x") {
-                            index1 = "y"
+                delete rooms[request.query.room].positions[request.query.name].move
+                delete rooms[request.query.room].positions[opponent].move
+                for (let index in trajectories[opponent]) {
+                    if (rooms[request.query.room].positions[request.query.name][index] === rooms[request.query.room].positions[opponent][index]) {
+                        if (index === "x") {
+                            index = "y"
                         } else {
-                            index1 = "x"
+                            index = "x"
                         }
-                        let order
-                        if (rooms[request.query.room][0][index1] < rooms[request.query.room][1][index1]) {
-                            order = -1
-                        } else {
-                            order = 1
+                        let order = Math.sign(rooms[request.query.room].positions[request.query.name][index] - rooms[request.query.room].positions[opponent][index])
+                        if (index === rooms[request.query.room].positions[request.query.name].axis && order !== rooms[request.query.room].positions[request.query.name].direction) {
+                            rooms[request.query.room].positions[request.query.name].fire = true
                         }
-                        for (let index2 in trajectories) {
-                            if ((order *= -1) * rooms[request.query.room][index2].direction === 1 && rooms[request.query.room][index2].axis === index1) {
-                                rooms[request.query.room][index2].fire = true
-                            }
+                        if (index === rooms[request.query.room].positions[opponent].axis && order === rooms[request.query.room].positions[opponent].direction) {
+                            rooms[request.query.room].positions[opponent].fire = true
                         }
                     }
                 }
-                firsts[request.query.room].send(rooms[request.query.room])
-                response.send(rooms[request.query.room])
+                channels[request.query.room].send(rooms[request.query.room].positions)
+                response.send(rooms[request.query.room].positions)
             } else {
-                firsts[request.query.room] = response
+                channels[request.query.room] = response
             }
         } else {
             response.sendStatus(400)

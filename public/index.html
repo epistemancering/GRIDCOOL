@@ -185,6 +185,14 @@
         </div>
     </div>
 </div>
+<div id = "what" style = "display: none; font-size: 4vh;">
+    <p>
+        You are playing Austin Henrie's GRIDCOOL, the strategy game where all you have to do is aim directly at your opponent. Easy, right? Type your name to get started! Once you're matched with another player and the game begins, you can move by either clicking the arrows or using your keyboard. Good luck in there...
+    </p>
+    <a href = "https://github.com/epistemancering/gridcool">
+        GitHub repository
+    </a>
+</div>
 
 <script src = "axios.min.js">
 </script>
@@ -193,14 +201,17 @@ function message(text) {
     blank()
     text = text.slice(1).split("\n")
     for (let index1 in text) {
+        line = 7 - Number(index1)
         for (let index2 in text[index1]) {
-            grid[7 - index1].children[index2].innerHTML = text[index1][index2]
+            grid[line].children[index2].innerHTML = text[index1][index2]
         }
     }
 }
 function blank() {
     let index1 = 8
     while (index1--) {
+        grid[index1].style.cursor = ""
+        grid[index1].style.backgroundColor = ""
         let index2 = 8
         while (index2--) {
             grid[index1].children[index2].innerHTML = ""
@@ -209,97 +220,251 @@ function blank() {
         }
     }
 }
-function start(response) {
-    if (response.data) {
-        room = response.data.room
-        if (response.data.positions) {
-            player = response.data.player
-            positions = response.data.positions
-            display()
-        } else {
-            axios.get("/start?room=" + room).then(start)
-        }
-    } else {
-        axios.get("/start").then(start)
-    }
+function what() {
+
 }
-function display() {
-    console.log(positions)
-    blank()
-    grid[positions[0].y].children[positions[0].x].style.color = "lime"
-    grid[positions[1].y].children[positions[1].x].style.color = "red"
-    for (let index in positions) {
-        grid[positions[index].y].children[positions[index].x].innerHTML = symbols[positions[index].axis][positions[index].direction]
-        if (positions[index].fire) {
-            let target = Number(!Number(index))
-            let trail = { "x": positions[index].x, "y": positions[index].y }
-            while ((trail[positions[index].axis] += positions[index].direction) !== positions[target][positions[index].axis]) {
-                grid[trail.y].children[trail.x].innerHTML = trails[positions[index].axis]
-            }
-            grid[trail.y].children[trail.x].style.filter = "blur(.5vh)"
-            room = undefined
-        }
+function introduce() {
+    state = "waiting"
+    let index = -1
+    while (grid[4].children[++index]?.innerHTML) {
+        name += grid[4].children[index].innerHTML
     }
-    if (room !== undefined) {
-        arrows = { "x": [], "y": [] }
-        for (let index1 in symbols) {
-            for (let index2 in symbols[index1]) {
-                let coordinates = { "x": positions[player].x, "y": positions[player].y }
-                if (grid[coordinates[index1] += Number(index2)]) {
-                    arrows[index1][index2] = grid[coordinates.y].children[coordinates.x]
-                    arrows[index1][index2].addEventListener("click", move)
-                    arrows[index1][index2].style.cursor = "pointer"
-                    if (!arrows[index1][index2].innerHTML) {
-                        arrows[index1][index2].innerHTML = symbols[index1][index2]
-                    }
-                }
-            }
-        }
-        grid[positions[player].y].children[positions[player].x].addEventListener("click", move)
-        grid[positions[player].y].children[positions[player].x].style.cursor = "pointer"
-    }
-}
-function move(event) {
-    let axis = positions[player].axis
-    let direction = 0
-    for (let index1 in arrows) {
-        for (let index2 in arrows[index1]) {
-            if (arrows[index1][index2] === event.target) {
-                axis = index1
-                direction = index2
-            }
-            arrows[index1][index2].removeEventListener("click", move)
-            arrows[index1][index2].style.cursor = ""
-            if (!arrows[index1][index2].style.color) {
-                arrows[index1][index2].innerHTML = ""
-            }
-        }
-    }
-    grid[positions[player].y].children[positions[player].x].removeEventListener("click", move)
-    grid[positions[player].y].children[positions[player].x].style.cursor = ""
-    axios.put("/move?room=" + room + "&player=" + player + "&axis=" + axis + "&direction=" + direction).then(function(response) {
-        positions = response.data
-        display()
-    })
-}
-let room
-let player
-let positions
-let grid = document.querySelector("#grid").children
-let arrows
-let symbols = { "x": [, ">"], "y": [, "^"] }
-symbols.x[-1] = "<"
-symbols.y[-1] = "v"
-let trails = { "x": "-", "y": "|"}
-message(`
+    message(
+`
+welcome,
+${name}
 
 
 waiting
   for
 opponent
-     ...
-`)
-start({})
+   ...
+`
+    )
+    grid[6].style.backgroundColor = "hsl(" + hue + ", 100%, 90%)"
+    start({})
+}
+function start(response) {
+    if (response.data) {
+        room = response.data.room
+        if (response.data.hues) {
+            hues = response.data.hues
+            let opponent
+            for (let index in hues) {
+                if (index !== name) {
+                    opponent = index
+                    break
+                }
+            }
+            message(
+`
+${name}
+  versus
+${opponent}
+
+
+>ready
+`
+            )
+            grid[7].style.backgroundColor = "hsl(" + hues[name] + ", 100%, 90%)"
+            grid[5].style.backgroundColor = "hsl(" + hues[opponent] + ", 100%, 90%)"
+            grid[2].style.cursor = "pointer"
+            grid[2].style.backgroundColor = "mediumslateblue"
+            positions = response.data.positions
+            state = "versus"
+        } else {
+            axios.get("/start?room=" + room + "&name=" + name + "&hue=" + hue).then(start)
+        }
+    } else {
+        axios.get("/start?name=" + name + "&hue=" + hue).then(start)
+    }
+}
+function display() {
+    console.log(positions)
+    blank()
+    for (let index in positions) {
+        grid[positions[index].y].children[positions[index].x].style.color = "hsl(" + hues[index] + ", 100%, 50%)"
+    }
+    state = "turn"
+    for (let index1 in positions) {
+        grid[positions[index1].y].children[positions[index1].x].innerHTML = symbols[positions[index1].axis][positions[index1].direction]
+        if (positions[index1].fire) {
+            state = "fire"
+            let target
+            for (let index2 in positions) {
+                if (index2 !== index1) {
+                    target = index2
+                    break
+                }
+            }
+            let trail = { "x": positions[index1].x, "y": positions[index1].y }
+            while ((trail[positions[index1].axis] += positions[index1].direction) !== positions[target][positions[index1].axis]) {
+                grid[trail.y].children[trail.x].innerHTML = trails[positions[index1].axis]
+            }
+            grid[trail.y].children[trail.x].style.filter = "blur(.5vh)"
+        }
+    }
+    if (state === "turn") {
+        for (let index1 in symbols) {
+            for (let index2 in symbols[index1]) {
+                let arrow = { "x": positions[name].x, "y": positions[name].y }
+                if (grid[arrow[index1] += Number(index2)]) {
+                    grid[arrow.y].children[arrow.x].style.cursor = "pointer"
+                    if (!grid[arrow.y].children[arrow.x].innerHTML) {
+                        grid[arrow.y].children[arrow.x].innerHTML = symbols[index1][index2]
+                    }
+                }
+            }
+        }
+        grid[positions[name].y].children[positions[name].x].style.cursor = "pointer"
+    }
+}
+function move(axis, direction) {
+    state = "waiting"
+    for (let index1 in symbols) {
+        for (let index2 in symbols[index1]) {
+            let arrow = { "x": positions[name].x, "y": positions[name].y }
+            if (grid[arrow[index1] += Number(index2)]) {
+                grid[arrow.y].children[arrow.x].style.cursor = ""
+                if (!grid[arrow.y].children[arrow.x].style.color) {
+                    grid[arrow.y].children[arrow.x].innerHTML = ""
+                }
+            }
+        }
+    }
+    grid[positions[name].y].children[positions[name].x].style.cursor = ""
+    axios.put("/move?room=" + room + "&name=" + name + "&axis=" + axis + "&direction=" + direction).then(function(response) {
+        positions = response.data
+        display()
+    })
+}
+let name = ""
+let hue = Math.floor(360 * Math.random())
+let room
+let hues
+let positions
+let state = "landing"
+let symbols = { "x": [, ">"], "y": [, "^"] }
+symbols.x[-1] = "<"
+symbols.y[-1] = "v"
+let trails = { "x": "-", "y": "|" }
+let grid = document.querySelector("#grid").children
+document.querySelector("body").addEventListener("keydown", function(event) {
+    if (state === "turn") {
+        if (event.code === "ArrowUp" || event.code === "KeyW" || event.code === "Numpad8") {
+            move("y", 1)
+        } else if (event.code === "ArrowRight" || event.code === "KeyD" || event.code === "Numpad6") {
+            move("x", 1)
+        } else if (event.code === "ArrowDown" || event.code === "KeyS" || event.code === "Numpad2") {
+            move("y", -1)
+        } else if (event.code === "ArrowLeft" || event.code === "KeyA" || event.code === "Numpad4") {
+            move("x", -1)
+        } else if (event.code === "Space" || event.code === "Enter" || event.code === "NumpadEnter") {
+            move(positions[name].axis, 0)
+        }
+    } else if (state === "versus") {
+        display()
+    } else if (state === "landing") {
+        let index = -1
+        while (grid[4].children[++index]?.innerHTML) {
+        }
+        if (event.key.length === 1) {
+            if (!index) {
+                grid[3].style.backgroundColor = "mediumslateblue"
+                grid[3].style.cursor = "pointer"
+                let message = ">confirm"
+                for (let index in message) {
+                    grid[3].children[index].innerHTML = message[index]
+                }
+            } else if (index === 8) {
+                index = 7
+            }
+            grid[4].children[index].innerHTML = event.key
+        } else if (index) {
+            if (event.key === "Enter") {
+                introduce()
+            } else if (event.key === "Backspace") {
+                grid[4].children[--index].innerHTML = ""
+                if (!index) {
+                    index = 8
+                    while (index--) {
+                        grid[3].children[index].innerHTML = ""
+                    }
+                    grid[3].style.cursor = ""
+                    grid[3].style.backgroundColor = ""
+                }
+            }
+        } else if (event.key === "Enter") {
+            document.querySelector("#what").style.display = ""
+        }
+    }
+})
+let index1 = 8
+while (index1--) {
+    let index2 = 8
+    while (index2--) {
+        grid[index1].children[index2].addEventListener("click", function(event) {
+            let target = {}
+            let index1 = 8
+            search: while (index1--) {
+                let index2 = 8
+                while (index2--) {
+                    if (grid[index1].children[index2] === event.target) {
+                        target.x = index2
+                        target.y = index1
+                        break search
+                    }
+                }
+            }
+            if (state === "turn") {
+                let axis
+                let direction
+                let parallel = "y"
+                for (let index in target) {
+                    if (target[index] === positions[name][index]) {
+                        direction = target[parallel] - positions[name][parallel]
+                        if (direction === -1 || direction === 1) {
+                            axis = parallel
+                        } else if (!direction) {
+                            axis = positions[name].axis
+                        }
+                    }
+                    parallel = "x"
+                }
+                if (axis) {
+                    move(axis, direction)
+                }
+            } else if (state === "versus") {
+                display()
+            } else if (state === "landing") {
+                if (target.y === 3) {
+                    if (grid[4].children[0].innerHTML) {
+                        introduce()
+                    }
+                } else if (target.y < 2) {
+                    document.querySelector("#what").style.display = ""
+                }
+            }
+        })
+    }
+}
+message(
+`
+type
+  your
+    name
+
+
+
+>what
+is this?
+`
+)
+grid[1].style.backgroundColor = "mediumslateblue"
+grid[1].style.cursor = "pointer"
+grid[0].style.backgroundColor = "mediumslateblue"
+grid[0].style.cursor = "pointer"
+grid[4].style.backgroundColor = "hsl(" + hue + ", 100%, 90%)"
 </script>
 </body>
 </html>
