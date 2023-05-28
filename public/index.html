@@ -2,6 +2,7 @@
 <html>
 <head>
 <!-- <link href = "" rel = "icon"> -->
+<meta content = "initial-scale = 1.0, width = device-width" name = "viewport">
 <style>
 #title, #grid {border-style: solid; border-width: .5vh; cursor: default; display: flex; margin: auto;}
 #title div, div div div {border-style: solid; border-width: .5vh; width: 100%;}
@@ -466,6 +467,11 @@ grid[1].style.cursor = "pointer"
 grid[0].style.backgroundColor = "mediumslateblue"
 grid[0].style.cursor = "pointer"
 grid[4].style.backgroundColor = "hsl(" + hue + ", 100%, 90%)"
+
+setInterval(function() {
+    document.querySelector("meta").content = "initial-scale = 1.0, width = device-width"
+    console.log("doing it")
+}, 1000)
 </script>
 </body>
 </html>
