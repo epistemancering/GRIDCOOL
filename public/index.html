@@ -473,6 +473,11 @@ grid[0].style.backgroundColor = "mediumslateblue"
 grid[0].style.cursor = "pointer"
 grid[4].style.backgroundColor = "hsl(" + hue + ", 100%, 90%)"
 
+document.querySelector("input").addEventListener("focus", function(event) {
+    event.preventDefault()
+    console.log("should prevent default action")
+})
+
 // setInterval(function() {
 //     document.querySelector("meta").content = "initial-scale = 1.0, width = device-width"
 //     console.log("doing it")
