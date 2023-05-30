@@ -1,25 +1,19 @@
 <!doctypehtml>
 <html>
 <head>
-<!-- <link href = "" rel = "icon"> -->
-<!-- <meta content = "initial-scale = 1.0, width = device-width" name = "viewport"> -->
-<!-- <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0, target-densitydpi=device-dpi"> -->
 <style>
-/* :root, * {
-  touch-action: pan-x pan-y;
-  height: 100% 
-} */
 #title, #grid {border-style: solid; border-width: .5vh; cursor: default; display: flex; margin: auto;}
 #title div, div div div {border-style: solid; border-width: .5vh; width: 100%;}
 #grid > div {display: flex; height: 100%;}
+.link {background-color: mediumslateblue; cursor: pointer;}
 </style>
 <title>
     GRIDCOOL
 </title>
 </head>
 
-<body style = "border-collapse: collapse; font-family: monospace; line-height: 1; margin: 0; position: relative; text-align: center;">
-<input style = "position: absolute; top: -100px; touch-action: none">
+<body style = "border-collapse: collapse; font-family: monospace; font-size: 4vh; line-height: 1; margin: 0; position: relative; text-align: center;">
+<input style = "position: absolute; top: -100px; touch-action: none;">
 <div id = "title" style = "font-size: 16vh; margin-bottom: 1vh; width: 136vh;">
     <div>
         G
@@ -192,7 +186,7 @@
         </div>
     </div>
 </div>
-<div id = "what" style = "display: none; font-size: 4vh;">
+<div id = "explanation" style = "display: none;">
     <p>
         You are playing Austin Henrie's GRIDCOOL, the strategy game where all you have to do is aim directly at your opponent. Easy, right? Type your name to get started! Once you're matched with another player and the game begins, you can move by either clicking the arrows or using your keyboard. Good luck in there...
     </p>
@@ -200,12 +194,66 @@
         GitHub repository
     </a>
 </div>
+<div id = "records" style = "display: none;">
+    <p>
+    </p>
+    <table style = "margin: auto;">
+        <tr>
+            <td>
+                when
+            </td>
+            <td>
+                opponent
+            </td>
+            <td>
+                class
+            </td>
+            <td>
+                outcome
+            </td>
+        </tr>
+    </table>
+</div>
 
 <script src = "axios.min.js">
 </script>
 <script>
+function landing() {
+    state = "landing"
+    hue = Math.floor(360 * Math.random())
+    message(
+`
+type
+  your
+    name
+
+
+
+>what
+is this?
+`
+    )
+    grid[4].style.backgroundColor = "hsl(" + hue + ", 100%, 90%)"
+    grid[1].className = "link"
+    grid[0].className = "link"
+    name = ""
+    password = ""
+}
 function message(text) {
-    blank()
+    let index1 = 8
+    while (index1--) {
+        grid[index1].className = ""
+        grid[index1].style.cursor = ""
+        grid[index1].style.backgroundColor = ""
+        let index2 = 8
+        while (index2--) {
+            grid[index1].children[index2].innerHTML = ""
+            grid[index1].children[index2].style.filter = ""
+            grid[index1].children[index2].style.cursor = ""
+            grid[index1].children[index2].style.color = ""
+            grid[index1].children[index2].style.backgroundColor = ""
+        }
+    }
     text = text.slice(1).split("\n")
     for (let index1 in text) {
         line = 7 - Number(index1)
@@ -214,28 +262,87 @@ function message(text) {
         }
     }
 }
-function blank() {
-    let index1 = 8
-    while (index1--) {
-        grid[index1].style.cursor = ""
-        grid[index1].style.backgroundColor = ""
-        let index2 = 8
-        while (index2--) {
-            grid[index1].children[index2].innerHTML = ""
-            grid[index1].children[index2].style.color = ""
-            grid[index1].children[index2].style.cursor = ""
-        }
+function what() {
+    explanation.style.display = ""
+    explanation.scrollIntoView()
+}
+function write(row, word) {
+    for (let index in word) {
+        grid[row].children[index].innerHTML = word[index]
     }
 }
-function what() {
-
+function erase(row) {
+    let index = 8
+    while (index--) {
+        grid[row].children[index].innerHTML = ""
+    }
+    grid[row].className = ""
+    grid[row].style.cursor = ""
+    grid[row].style.backgroundColor = ""
 }
-function introduce() {
-    state = "waiting"
+function dub() {
+    state = undefined
     let index = -1
     while (grid[4].children[++index]?.innerHTML) {
         name += grid[4].children[index].innerHTML
     }
+    erase(3)
+    name = name.trim()
+    axios.get("/name?token=" + token + "&name=" + name + "&hue=" + hue).then(function(response) {
+        if (response.data) {
+            if (response.data.hues) {
+                versus(response)
+            } else {
+                state = "password"
+                message(
+`
+welcome
+   back,
+${name}
+    type
+password
+
+
+>cancel
+`
+                )
+                hue = Number(response.data.hue)
+                grid[5].style.backgroundColor = "hsl(" + hue + ", 100%, 90%)"
+                grid[2].style.backgroundColor = "gainsboro"
+                grid[0].className = "link"
+                password = ""
+            }
+        } else {
+            introduce()
+        }
+    })
+}
+function versus(response) {
+    state = "versus"
+    hues = response.data.hues
+    for (let index in hues) {
+        if (index !== name) {
+            opponent = index
+            break
+        }
+    }
+    message(
+`
+${name}
+  versus
+${opponent}
+
+
+>ready
+`
+    )
+    grid[7].style.backgroundColor = "hsl(" + hues[name] + ", 100%, 90%)"
+    grid[5].style.backgroundColor = "hsl(" + hues[opponent] + ", 100%, 90%)"
+    grid[2].className = "link"
+    positions = response.data.positions
+}
+function introduce() {
+    state = "introducing"
     message(
 `
 welcome,
@@ -252,51 +359,28 @@ opponent
     start({})
 }
 function start(response) {
-    if (response.data) {
-        room = response.data.room
-        if (response.data.hues) {
-            hues = response.data.hues
-            let opponent
-            for (let index in hues) {
-                if (index !== name) {
-                    opponent = index
-                    break
-                }
+    if (state === "returning" || state === "introducing") {
+        if (response.data) {
+            if (response.data.hues) {
+                versus(response)
+            } else {
+                axios.get("/start?room=" + response.data.room + "&token=" + token + "&name=" + name + "&password=" + password + "&hue=" + hue).then(start)
             }
-            message(
-`
-${name}
-  versus
-${opponent}
-
-
->ready
-`
-            )
-            grid[7].style.backgroundColor = "hsl(" + hues[name] + ", 100%, 90%)"
-            grid[5].style.backgroundColor = "hsl(" + hues[opponent] + ", 100%, 90%)"
-            grid[2].style.cursor = "pointer"
-            grid[2].style.backgroundColor = "mediumslateblue"
-            positions = response.data.positions
-            state = "versus"
         } else {
-            axios.get("/start?room=" + room + "&name=" + name + "&hue=" + hue).then(start)
+            axios.get("/start?token=" + token + "&name=" + name + "&password=" + password + "&hue=" + hue).then(start)
         }
-    } else {
-        axios.get("/start?name=" + name + "&hue=" + hue).then(start)
     }
 }
 function display() {
-    console.log(positions)
-    blank()
+    state = "turn"
+    message("")
     for (let index in positions) {
         grid[positions[index].y].children[positions[index].x].style.color = "hsl(" + hues[index] + ", 100%, 50%)"
     }
-    state = "turn"
     for (let index1 in positions) {
         grid[positions[index1].y].children[positions[index1].x].innerHTML = symbols[positions[index1].axis][positions[index1].direction]
         if (positions[index1].fire) {
-            state = "fire"
+            state = "outcome"
             let target
             for (let index2 in positions) {
                 if (index2 !== index1) {
@@ -324,10 +408,32 @@ function display() {
             }
         }
         grid[positions[name].y].children[positions[name].x].style.cursor = "pointer"
+    } else {
+        if (positions[name].y && positions[opponent].y) {
+            open = 0
+        } else if (positions[name].y !== 7 && positions[opponent].y !== 7) {
+            open = 7
+        } else {
+            open = 3
+        }
+        let outcome
+        if (positions[name].fire) {
+            if (positions[opponent].fire) {
+                outcome = ">M.A.D."
+            } else {
+                outcome = ">gottem"
+            }
+        } else {
+            outcome = ">owned"
+        }
+        grid[open].className = "link"
+        for (let index in outcome) {
+            grid[open].children[index].innerHTML = outcome[index]
+        }
     }
 }
 function move(axis, direction) {
-    state = "waiting"
+    state = undefined
     for (let index1 in symbols) {
         for (let index2 in symbols[index1]) {
             let arrow = { "x": positions[name].x, "y": positions[name].y }
@@ -340,22 +446,231 @@ function move(axis, direction) {
         }
     }
     grid[positions[name].y].children[positions[name].x].style.cursor = ""
-    axios.put("/move?room=" + room + "&name=" + name + "&axis=" + axis + "&direction=" + direction).then(function(response) {
+    axios.put("/move?token=" + token + "&axis=" + axis + "&direction=" + direction).then(function(response) {
         positions = response.data
         display()
     })
 }
-let name = ""
-let hue = Math.floor(360 * Math.random())
-let room
+function followup() {
+    if (password) {
+        menu()
+    } else {
+        state = "claim"
+        message(
+`
+>claim
+   your
+    name
+${name}
+
+>keep
+ playing
+as guest
+`
+        )
+        grid[4].style.backgroundColor = "hsl(" + hues[name] + ", 100%, 90%)"
+        grid[4].style.cursor = "pointer"
+        grid[7].className = "link"
+        grid[6].className = "link"
+        grid[5].className = "link"
+        grid[2].className = "link"
+        grid[1].className = "link"
+        grid[0].className = "link"
+    }
+}
+function setPassword() {
+    state = "set password"
+    message(
+`
+type a
+password
+
+
+
+
+
+>cancel
+`
+    )
+    grid[5].style.backgroundColor = "gainsboro"
+    grid[0].className = "link"
+    password = ""
+}
+function confirmPassword(nextState) {
+    state = nextState
+    message(
+`
+type it
+   again
+
+
+
+
+
+>back
+`
+    )
+    grid[5].style.backgroundColor = "gainsboro"
+    grid[0].className = "link"
+    confirmed = ""
+}
+function register() {
+    state = undefined
+    erase(0)
+    erase(4)
+    axios.post("/account?name=" + name + "&password=" + password + "&hue=" + hue).then(menu)
+}
+function menu() {
+    state = "menu"
+    message(
+`
+>new
+   match
+
+>view
+ records
+
+>account
+settings
+`
+    )
+    grid[7].className = "link"
+    grid[6].className = "link"
+    grid[4].className = "link"
+    grid[3].className = "link"
+    grid[1].className = "link"
+    grid[0].className = "link"
+}
+function tryPassword() {
+    state = undefined
+    erase(1)
+    erase(0)
+    axios.get("/account?name=" + name + "&password=" + password).then(function(response) {
+        if (response.data[0]) {
+            menu()
+        } else {
+            state = "password"
+            grid[0].className = "link"
+            write(1, "no match")
+            erase(2)
+            write(0, ">cancel")
+            password = ""
+        }
+    })
+}
+function account() {
+    state = "account"
+    message(
+`
+>change
+   color
+>change
+password
+>delete
+ account
+
+>back
+`
+    )
+    grid[7].className = "link"
+    grid[6].className = "link"
+    grid[5].className = "link"
+    grid[4].className = "link"
+    grid[3].className = "link"
+    grid[2].className = "link"
+    grid[0].className = "link"
+}
+function testHue() {
+    if (updated > 359) {
+        updated = 359
+    } else if (updated < 0) {
+        updated = 0
+    }
+    grid[4].children[2].style.backgroundColor = "hsl(" + updated + ", 100%, 90%)"
+    grid[4].children[3].style.backgroundColor = "hsl(" + updated + ", 100%, 90%)"
+    grid[4].children[4].style.backgroundColor = "hsl(" + updated + ", 100%, 90%)"
+    grid[6].children[3].style.color = "hsl(" + updated + ", 100%, 50%)"
+    grid[4].children[1].style.color = "hsl(" + updated + ", 100%, 50%)"
+    grid[4].children[5].style.color = "hsl(" + updated + ", 100%, 50%)"
+    grid[2].children[3].style.color = "hsl(" + updated + ", 100%, 50%)"
+    let word = String(updated)
+    while (word.length !== 3) {
+        word = 0 + word
+    }
+    grid[4].children[2].innerHTML = word[0]
+    grid[4].children[3].innerHTML = word[1]
+    grid[4].children[4].innerHTML = word[2]
+}
+function confirmHue() {
+    if (updated === hue) {
+        account()
+    } else {
+        state = undefined
+        grid[6].children[3].style.innerHTML = ""
+        grid[4].children[1].style.innerHTML = ""
+        grid[4].children[5].style.innerHTML = ""
+        grid[2].children[3].style.innerHTML = ""
+        let index = 8
+        erase(0)
+        hue = updated
+        axios.put("/hue?name=" + name + "&password=" + password + "&hue=" + hue).then(account)
+    }
+}
+function newPassword() {
+    state = "new password"
+    message(
+`
+type new
+password
+
+
+
+
+
+>cancel
+`
+    )
+    grid[5].style.backgroundColor = "gainsboro"
+    grid[0].className = "link"
+    updated = ""
+}
+function changePassword() {
+    state = undefined
+    erase(0)
+    erase(4)
+    axios.put("/account?name=" + name + "&password=" + password + "&updated=" + updated).then(function() {
+        password = updated
+        account()
+    })
+}
+function wipe() {
+    state = undefined
+    erase(1)
+    erase(0)
+    records.style.display = "none"
+    axios.delete("/account?name=" + name + "&password=" + password).then(landing)
+}
+let state
+let grid = document.querySelector("#grid").children
+let hue
+let explanation = document.querySelector("#explanation")
+let keyboard = document.querySelector("input")
+let token = Math.random()
+let name
+let opponent
 let hues
 let positions
-let state = "landing"
 let symbols = { "x": [, ">"], "y": [, "^"] }
 symbols.x[-1] = "<"
 symbols.y[-1] = "v"
 let trails = { "x": "-", "y": "|" }
-let grid = document.querySelector("#grid").children
+let open
+let password
+let confirmed
+let table = document.querySelector("table")
+let totals = document.querySelector("#records p")
+let records = document.querySelector("#records")
+let updated
 document.querySelector("body").addEventListener("keydown", function(event) {
     if (state === "turn") {
         if (event.code === "ArrowUp" || event.code === "KeyW" || event.code === "Numpad8") {
@@ -366,43 +681,241 @@ document.querySelector("body").addEventListener("keydown", function(event) {
             move("y", -1)
         } else if (event.code === "ArrowLeft" || event.code === "KeyA" || event.code === "Numpad4") {
             move("x", -1)
-        } else if (event.code === "Space" || event.code === "Enter" || event.code === "NumpadEnter") {
+        } else if (event.key === "Enter" || event.key === " ") {
             move(positions[name].axis, 0)
         }
     } else if (state === "versus") {
         display()
+    } else if (state === "outcome") {
+        followup()
+    } else if (state === "returning") {
+        if (event.key === "Enter") {
+            menu()
+        }
     } else if (state === "landing") {
         let index = -1
         while (grid[4].children[++index]?.innerHTML) {
         }
         if (event.key.length === 1) {
-            if (!index) {
-                grid[3].style.backgroundColor = "mediumslateblue"
-                grid[3].style.cursor = "pointer"
-                let message = ">confirm"
-                for (let index in message) {
-                    grid[3].children[index].innerHTML = message[index]
+            if (event.key !== " " || index) {
+                if (index === 8) {
+                    index = 7
+                } else if (!index) {
+                    grid[3].className = "link"
+                    write(3, ">confirm")
                 }
-            } else if (index === 8) {
-                index = 7
+                grid[4].children[index].innerHTML = event.key
             }
-            grid[4].children[index].innerHTML = event.key
         } else if (index) {
             if (event.key === "Enter") {
-                introduce()
+                dub()
             } else if (event.key === "Backspace") {
                 grid[4].children[--index].innerHTML = ""
                 if (!index) {
-                    index = 8
-                    while (index--) {
-                        grid[3].children[index].innerHTML = ""
-                    }
-                    grid[3].style.cursor = ""
-                    grid[3].style.backgroundColor = ""
+                    erase(3)
                 }
             }
         } else if (event.key === "Enter") {
-            document.querySelector("#what").style.display = ""
+            what()
+        }
+    } else if (state === "password") {
+        if (event.key.length === 1) {
+            if (password.length < 8) {
+                grid[2].children[password.length].innerHTML = "*"
+                if (!password) {
+                    grid[1].className = "link"
+                    write(1, ">sign in")
+                }
+            }
+            password += event.key
+        } else if (password) {
+            if (event.key === "Enter") {
+                tryPassword()
+            } else if (event.key === "Backspace") {
+                password = password.slice(0, -1)
+                if (password.length < 8) {
+                    grid[2].children[password.length].innerHTML = ""
+                    if (!password) {
+                        erase(1)
+                    }
+                }
+            }
+        } else if (event.key === "Enter") {
+            landing()
+        }
+    } else if (state === "hue") {
+        if (event.key === "Enter") {
+            confirmHue()
+        } else {
+            let digit = Number(event.key)
+            if (digit === digit) {
+                let word = String(updated)
+                if (word.length === 3) {
+                    word = word.slice(0, 2) + digit
+                } else {
+                    word += digit
+                }
+                updated = Number(word)
+            } else {
+                if (event.key === "Backspace") {
+                    updated = Math.floor(updated / 10)
+                } else if (event.code === "ArrowUp" || event.code === "KeyW" || event.code === "Numpad8") {
+                    ++updated
+                } else if (event.code === "ArrowRight" || event.code === "KeyD" || event.code === "Numpad6") {
+                    updated += 10
+                } else if (event.code === "ArrowDown" || event.code === "KeyS" || event.code === "Numpad2") {
+                    --updated
+                } else if (event.code === "ArrowLeft" || event.code === "KeyA" || event.code === "Numpad4") {
+                    updated -= 10
+                }
+            }
+            testHue()
+        }
+    } else if (state === "set password") {
+        if (event.key.length === 1) {
+            if (password.length < 8) {
+                grid[5].children[password.length].innerHTML = "*"
+                if (!password) {
+                    grid[4].className = "link"
+                    write(4, ">confirm")
+                }
+            }
+            password += event.key
+        } else if (password) {
+            if (event.key === "Enter") {
+                confirmPassword("confirm set password")
+            } else if (event.key === "Backspace") {
+                password = password.slice(0, -1)
+                if (password.length < 8) {
+                    grid[5].children[password.length].innerHTML = ""
+                    if (!password) {
+                        erase(4)
+                    }
+                }
+            }
+        } else if (event.key === "Enter") {
+            landing()
+        }
+    } else if (state === "confirm set password") {
+        if (event.key === "Enter") {
+            if (confirmed === password) {
+                register()
+            } else {
+                setPassword()
+            }
+        } else {
+            if (event.key.length === 1) {
+                if (confirmed.length < 8) {
+                    grid[5].children[confirmed.length].innerHTML = "*"
+                }
+                confirmed += event.key
+            } else if (event.key === "Backspace") {
+                confirmed = confirmed.slice(0, -1)
+                if (confirmed.length < 8) {
+                    grid[5].children[confirmed.length].innerHTML = ""
+                }
+            }
+            if (confirmed === password) {
+                grid[4].className = "link"
+                write(4, ">set")
+            } else {
+                erase(4)
+            }
+        }
+    } else if (state === "confirm password") {
+        if (event.key.length === 1) {
+            if (confirmed.length < 8) {
+                grid[4].children[confirmed.length].innerHTML = "*"
+            }
+            confirmed += event.key
+        } else if (event.key === "Backspace") {
+            confirmed = confirmed.slice(0, -1)
+            if (confirmed.length < 8) {
+                grid[4].children[confirmed.length].innerHTML = ""
+            }
+        } else if (event.key === "Enter") {
+            account()
+        }
+        if (confirmed === password) {
+            newPassword()
+        }
+    } else if (state === "new password") {
+        if (event.key.length === 1) {
+            if (updated.length < 8) {
+                grid[5].children[updated.length].innerHTML = "*"
+                if (!updated) {
+                    grid[4].className = "link"
+                    write(4, ">confirm")
+                }
+            }
+            updated += event.key
+        } else if (updated) {
+            if (event.key === "Enter") {
+                confirmPassword("confirm new password")
+            } else if (event.key === "Backspace") {
+                updated = updated.slice(0, -1)
+                if (updated.length < 8) {
+                    grid[5].children[updated.length].innerHTML = ""
+                    if (!updated) {
+                        erase(4)
+                    }
+                }
+            }
+        } else if (event.key === "Enter") {
+            account()
+        }
+    } else if (state === "confirm new password") {
+        if (event.key === "Enter") {
+            if (confirmed === updated) {
+                changePassword()
+            } else {
+                newPassword()
+            }
+        } else {
+            if (event.key.length === 1) {
+                if (confirmed.length < 8) {
+                    grid[5].children[confirmed.length].innerHTML = "*"
+                }
+                confirmed += event.key
+            } else if (event.key === "Backspace") {
+                confirmed = confirmed.slice(0, -1)
+                if (confirmed.length < 8) {
+                    grid[5].children[confirmed.length].innerHTML = ""
+                }
+            }
+            if (confirmed === updated) {
+                grid[4].className = "link"
+                write(4, ">change")
+            } else {
+                erase(4)
+            }
+        }
+    } else if (state === "delete") {
+        if (event.key === "Enter") {
+            if (confirmed === password) {
+                wipe()
+            } else {
+                account()
+            }
+        } else {
+            if (event.key.length === 1) {
+                if (confirmed.length < 8) {
+                    grid[2].children[confirmed.length].innerHTML = "*"
+                }
+                confirmed += event.key
+            } else if (event.key === "Backspace") {
+                confirmed = confirmed.slice(0, -1)
+                if (confirmed.length < 8) {
+                    grid[2].children[confirmed.length].innerHTML = ""
+                }
+            }
+            if (confirmed === password) {
+                grid[1].style.backgroundColor = "red"
+                grid[1].style.cursor = "pointer"
+                write(1, ">do it")
+            } else {
+                erase(1)
+            }
         }
     }
 })
@@ -443,54 +956,260 @@ while (index1--) {
                 }
             } else if (state === "versus") {
                 display()
+            } else if (state === "outcome") {
+                if (target.y === open) {
+                    followup()
+                }
+            } else if (state === "menu") {
+                if (target.y > 5) {
+                    state = "returning"
+                    message(
+`
+waiting
+  for
+opponent
+   ...
+
+
+
+>cancel
+`
+                    )
+                    grid[0].className = "link"
+                    start({})
+                } else if (target.y > 2 && target.y !== 5) {
+                    axios.get("/records?name=" + name + "&password=" + password).then(function(response) {
+                        let matches = []
+                        let gottems = 0
+                        let owneds = 0
+                        let MADs = 0
+                        for (let index in response.data) {
+                            matches.push({ "text": [] })
+                            matches[index].text.push(response.data[index].fired)
+                            if (response.data[index].hue1) {
+                                matches[index].text.push(response.data[index].player1, "guest")
+                                matches[index].hue = response.data[index].hue1
+                            } else if (response.data[index].hue2) {
+                                matches[index].text.push(response.data[index].player2, "guest")
+                                matches[index].hue = response.data[index].hue2
+                            } else {
+                                if (response.data[index].player1) {
+                                    matches[index].text.push(response.data[index].player1, "registered")
+                                } else {
+                                    matches[index].text.push(response.data[index].player2, "registered")
+                                }
+                                matches[index].hue = response.data[index].hue
+                            }
+                            if (response.data[index].winner === "0") {
+                                matches[index].text.push("M.A.D.")
+                                ++MADs
+                            } else if ((response.data[index].player1 && response.data[index].winner === "1") || (response.data[index].player2 && response.data[index].winner === "2")) {
+                                matches[index].text.push("owned")
+                                ++owneds
+                            } else {
+                                matches[index].text.push("gottem")
+                                ++gottems
+                            }
+                        }
+                        matches.sort(function(first, second) {
+                            if (first.text[0] < second.text[0]) {
+                                return 1
+                            } else {
+                                return -1
+                            }
+                        })
+                        while (table.children.length !== 1) {
+                            table.children[table.children.length - 1].remove()
+                        }
+                        for (let index1 in matches) {
+                            let row = document.createElement("tr")
+                            row.style.backgroundColor = "hsl(" + matches[index1].hue + ", 100%, 90%)"
+                            for (let index2 in matches[index1].text) {
+                                let cell = document.createElement("td")
+                                cell.innerHTML = matches[index1].text[index2]
+                                row.appendChild(cell)
+                            }
+                            table.appendChild(row)
+                        }
+                        totals.innerHTML = "total of " + gottems + " gottems, " + owneds + " owneds, and " + MADs + " M.A.D.s versus other players"
+                        explanation.style.display = "hidden"
+                        records.style.display = ""
+                        records.scrollIntoView()
+                    })
+                } else if (target.y !== 2) {
+                    account()
+                }
+            } else if (state === "returning") {
+                if (!target.y) {
+                    menu()
+                }
             } else if (state === "landing") {
                 if (target.y < 2) {
-                    document.querySelector("#what").style.display = ""
+                    what()
                 } else if (grid[4].children[0].innerHTML && target.y === 3) {
-                    introduce()
+                    dub()
                 } else {
-                    document.querySelector("input").focus()
+                    keyboard.focus()
+                }
+            } else if (state === "password") {
+                if (target.y) {
+                    if (password && target.y === 2) {
+                        tryPassword()
+                    } else {
+                        keyboard.focus()
+                    }
+                } else {
+                    landing()
+                }
+            } else if (state === "account") {
+                if (target.y) {
+                    if (target.y > 5) {
+                        state = "hue"
+                        message(
+`
+
+   ^
+
+ <   >
+
+   v
+
+>confirm
+`
+                        )
+                        grid[0].className = "link"
+                        grid[6].children[3].style.cursor = "pointer"
+                        grid[4].children[1].style.cursor = "pointer"
+                        grid[4].children[5].style.cursor = "pointer"
+                        grid[2].children[3].style.cursor = "pointer"
+                        updated = hue
+                        testHue()
+                    } else if (target.y > 3) {
+                        state = "confirm password"
+                        message(
+`
+type
+ current
+password
+
+
+
+
+>cancel
+`
+                        )
+                        grid[4].style.backgroundColor = "gainsboro"
+                        grid[0].className = "link"
+                        confirmed = ""
+                    } else if (target.y > 1) {
+                        state = "delete"
+                        message(
+`
+to truly
+delete
+ it all,
+  type
+password
+
+
+>don't!
+`
+                        )
+                        grid[6].style.backgroundColor = "red"
+                        grid[5].style.backgroundColor = "red"
+                        grid[2].style.backgroundColor = "gainsboro"
+                        grid[0].className = "link"
+                        confirmed = ""
+                    }
+                } else {
+                    menu()
+                }
+            } else if (state === "hue") {
+                if (target.y) {
+                    if (target.y === 4) {
+                        if (target.x === 1) {
+                            updated -=10
+                        } else if (target.x === 5) {
+                            updated += 10
+                        }
+                    } else if (target.y === 6) {
+                        if (target.x === 3) {
+                            ++updated
+                        }
+                    } else if (target.y === 2 && target.x === 3) {
+                        --updated
+                    }
+                    testHue()
+                } else {
+                    confirmHue()
+                }
+            } else if (state === "claim") {
+                if (target.y < 3) {
+                    landing()
+                } else if (target.y > 3) {
+                    setPassword()
+                }
+            } else if (state === "set password") {
+                if (target.y) {
+                    if (password && target.y === 4) {
+                        confirmPassword("confirm set password")
+                    } else {
+                        keyboard.focus()
+                    }
+                } else {
+                    landing()
+                }
+            } else if (state === "confirm set password") {
+                if (target.y) {
+                    if (confirmed === password && target.y === 4) {
+                        register()
+                    } else {
+                        keyboard.focus()
+                    }
+                } else {
+                    setPassword()
+                }
+            } else if (state === "confirm password") {
+                if (target.y) {
+                    keyboard.focus()
+                } else {
+                    account()
+                }
+            } else if (state === "new password") {
+                if (target.y) {
+                    if (updated && target.y === 5) {
+                        confirmPassword("confirm new password")
+                    } else {
+                        keyboard.focus()
+                    }
+                } else {
+                    account()
+                }
+            } else if (state === "confirm new password") {
+                if (target.y) {
+                    if (confirmed === updated && target.y === 4) {
+                        changePassword()
+                    } else {
+                        keyboard.focus()
+                    }
+                } else {
+                    newPassword()
+                }
+            } else if (state === "delete") {
+                if (target.y) {
+                    if (confirmed === password && target.y === 1) {
+                        wipe()
+                    } else {
+                        keyboard.focus()
+                    }
+                } else {
+                    account()
                 }
             }
         })
     }
 }
-message(
-`
-type
-  your
-    name
-
-
-
->what
-is this?
-`
-)
-grid[1].style.backgroundColor = "mediumslateblue"
-grid[1].style.cursor = "pointer"
-grid[0].style.backgroundColor = "mediumslateblue"
-grid[0].style.cursor = "pointer"
-grid[4].style.backgroundColor = "hsl(" + hue + ", 100%, 90%)"
-
-// document.querySelector("input").addEventListener("focus", function(event) {
-//     event.preventDefault()
-//     console.log("should prevent default action")
-// })
-
-// document.querySelector("input").addEventListener("blur", function(event) {
-//     event.preventDefault()
-//     console.log("should prevent default action")
-// })
-
-// document.addEventListener('touchmove', function (event) {
-//   if (event.scale !== 1) { event.preventDefault(); }
-// }, { passive: false });
-
-// setInterval(function() {
-//     document.querySelector("meta").content = "initial-scale = 1.0, width = device-width"
-//     console.log("doing it")
-// }, 1000)
+landing()
 </script>
 </body>
 </html>
