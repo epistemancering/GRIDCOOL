@@ -17,7 +17,7 @@ Move by either clicking the arrows or using your keyboard. Once your opponent is
 There's no telling where your opponent will be, since they move at the same time as you...
 
 &nbsp;
-* ### fun (*sometimes)
+* ### fun (sometimes)
 ![](screenshots/fun.png)
 
 After your first match, create an account and set your signature color. This will be visible to opponents, so be sure to choose an insultingly garish hue.
@@ -33,7 +33,7 @@ From your account, you can also check your match history, among other options. T
 is not a real feature, so [go and try the game!](http://13.57.195.228/)
 
 &nbsp;
-## involved tech
+## tech stack
 * Javascript
 * NodeJs
 * Express

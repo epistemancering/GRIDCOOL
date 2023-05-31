@@ -2,7 +2,7 @@
 <html>
 <head>
 <style>
-#title, #grid {border-style: solid; border-width: .5vh; cursor: default; display: flex; margin: auto;}
+#title, #grid {background-color: white; border-style: solid; border-width: .5vh; cursor: default; display: flex; margin: auto;}
 #title div, div div div {border-style: solid; border-width: .5vh; width: 100%;}
 #grid > div {display: flex; height: 100%;}
 .link {background-color: mediumslateblue; cursor: pointer;}
@@ -12,9 +12,9 @@
 </title>
 </head>
 
-<body style = "border-collapse: collapse; font-family: monospace; font-size: 4vh; line-height: 1; margin: 0; position: relative; text-align: center;">
+<body style = "background-color: black; border-collapse: collapse; font-family: monospace; font-size: 4vh; line-height: 1; margin: 0; position: relative; text-align: center;">
 <input style = "position: absolute; top: -100px; touch-action: none;">
-<div id = "title" style = "font-size: 16vh; margin-bottom: 1vh; width: 136vh;">
+<div id = "title" style = "font-size: 16vh; margin-bottom: 1vh; position: relative; width: 136vh; z-index: 1;">
     <div>
         G
     </div>
@@ -40,7 +40,7 @@
         L
     </div>
 </div>
-<div id = "grid" style = "flex-direction: column-reverse; font-size: 8vh; height: 80vh; width: 80vh;">
+<div id = "grid" style = "filter: drop-shadow(0 0 10vh white); flex-direction: column-reverse; font-size: 8vh; height: 80vh; width: 80vh;">
     <div>
         <div>
         </div>
@@ -186,19 +186,19 @@
         </div>
     </div>
 </div>
-<div id = "explanation" style = "display: none;">
+<div id = "explanation" style = "color: white; display: none;">
     <p>
         You are playing Austin Henrie's GRIDCOOL, the strategy game where all you have to do is aim directly at your opponent. Easy, right? Type your name to get started! Once you're matched with another player and the game begins, you can move by either clicking the arrows or using your keyboard. Good luck in there...
     </p>
-    <a href = "https://github.com/epistemancering/gridcool">
+    <a href = "https://github.com/epistemancering/gridcool" target = "_blank">
         GitHub repository
     </a>
 </div>
 <div id = "records" style = "display: none;">
-    <p>
+    <p style = "color: white;">
     </p>
     <table style = "margin: auto;">
-        <tr>
+        <tr style = "color: white;">
             <td>
                 when
             </td>
@@ -650,6 +650,7 @@ function wipe() {
     records.style.display = "none"
     axios.delete("/account?name=" + name + "&password=" + password).then(landing)
 }
+document.querySelector("#title").style.backgroundImage = "linear-gradient(hsl(" + 360 * Math.random() + ", 100%, 75%), hsl(" + 360 * Math.random() + ", 100%, 75%))"
 let state
 let grid = document.querySelector("#grid").children
 let hue
@@ -1032,7 +1033,7 @@ opponent
                             table.appendChild(row)
                         }
                         totals.innerHTML = "total of " + gottems + " gottems, " + owneds + " owneds, and " + MADs + " M.A.D.s versus other players"
-                        explanation.style.display = "hidden"
+                        explanation.style.display = "none"
                         records.style.display = ""
                         records.scrollIntoView()
                     })
