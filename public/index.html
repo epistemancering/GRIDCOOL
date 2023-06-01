@@ -240,19 +240,9 @@ is this?
     password = ""
 }
 function message(text) {
-    let index1 = 8
-    while (index1--) {
-        grid[index1].className = ""
-        grid[index1].style.cursor = ""
-        grid[index1].style.backgroundColor = ""
-        let index2 = 8
-        while (index2--) {
-            grid[index1].children[index2].innerHTML = ""
-            grid[index1].children[index2].style.filter = ""
-            grid[index1].children[index2].style.cursor = ""
-            grid[index1].children[index2].style.color = ""
-            grid[index1].children[index2].style.backgroundColor = ""
-        }
+    let index = 8
+    while (index--) {
+        erase(index)
     }
     text = text.slice(1).split("\n")
     for (let index1 in text) {
@@ -275,6 +265,10 @@ function erase(row) {
     let index = 8
     while (index--) {
         grid[row].children[index].innerHTML = ""
+        grid[row].children[index].style.filter = ""
+        grid[row].children[index].style.cursor = ""
+        grid[row].children[index].style.color = ""
+        grid[row].children[index].style.backgroundColor = ""
     }
     grid[row].className = ""
     grid[row].style.cursor = ""
@@ -924,7 +918,8 @@ let index1 = 8
 while (index1--) {
     let index2 = 8
     while (index2--) {
-        grid[index1].children[index2].addEventListener("click", function(event) {
+        grid[index1].children[index2].addEventListener("mousedown", function(event) {
+            event.preventDefault()
             let target = {}
             let index1 = 8
             search: while (index1--) {
@@ -1037,7 +1032,7 @@ opponent
                         records.style.display = ""
                         records.scrollIntoView()
                     })
-                } else if (target.y !== 2) {
+                } else if (target.y < 2) {
                     account()
                 }
             } else if (state === "returning") {
@@ -1054,7 +1049,7 @@ opponent
                 }
             } else if (state === "password") {
                 if (target.y) {
-                    if (password && target.y === 2) {
+                    if (password && target.y === 1) {
                         tryPassword()
                     } else {
                         keyboard.focus()
@@ -1178,7 +1173,7 @@ password
                 }
             } else if (state === "new password") {
                 if (target.y) {
-                    if (updated && target.y === 5) {
+                    if (updated && target.y === 4) {
                         confirmPassword("confirm new password")
                     } else {
                         keyboard.focus()
