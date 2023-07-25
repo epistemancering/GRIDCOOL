@@ -1,5 +1,5 @@
 # GRIDCOOL
-The multiplayer strategy game where all you have to do is aim directly at your opponent. Easy, right? Play it [here](http://grid.cool/).
+The multiplayer strategy game where all you have to do is aim directly at your opponent. Easy, right? Play it [here](https://grid.cool/).
 
 &nbsp;
 
@@ -30,7 +30,7 @@ From your account, you can also check your match history, among other options. T
 
 &nbsp;
 * ### reading this page
-is not a real feature, so [go and try the game!](http://grid.cool/)
+is not a real feature, so [go and try the game!](https://grid.cool/)
 
 &nbsp;
 ## tech stack
