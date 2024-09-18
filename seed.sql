@@ -1,11 +1,11 @@
 DROP TABLE IF EXISTS accounts, matches;
-CREATE TABLE accounts (
+CREATE TABLE gridcool.accounts (
     name TEXT UNIQUE,
     password TEXT,
     hue DECIMAL,
     created TIMESTAMP DEFAULT(CURRENT_TIMESTAMP)
 );
-CREATE TABLE matches (
+CREATE TABLE gridcool.matches (
     player1 TEXT,
     hue1 DECIMAL,
     player2 TEXT,

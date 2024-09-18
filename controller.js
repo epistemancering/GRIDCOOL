@@ -22,16 +22,14 @@ function setup(request, response) {
         }, 1000)
     }
 }
-let database = new sequelize(require("./secrets").key, {
-    "dialect": "postgres",
-    "dialectOptions": { "ssl": { "rejectUnauthorized": false } }
-})
+
+const database = new sequelize("postgres://postgres:password@localhost")
 let tokens = []
 let rooms = []
 let channel
 module.exports = {
     "name": function(request, response) {
-        database.query("SELECT hue FROM accounts WHERE name = '" + request.query.name + "';").then(function(selection) {
+        database.query("SELECT hue FROM gridcool.accounts WHERE name = '" + request.query.name + "';").then(function(selection) {
             if (selection[0][0]) {
                 response.send({ "hue": selection[0][0].hue })
             } else if (channel) {
@@ -43,7 +41,7 @@ module.exports = {
     },
     "start": function(request, response) {
         if (rooms[request.query.room]) {
-            database.query("SELECT password, hue FROM accounts WHERE name = '" + request.query.name + "';").then(function(selection) {
+            database.query("SELECT password, hue FROM gridcool.accounts WHERE name = '" + request.query.name + "';").then(function(selection) {
                 if (selection[0][0]) {
                     if (bcryptjs.compareSync(request.query.password, selection[0][0].password)) {
                         hue = Number(selection[0][0].hue)
@@ -65,7 +63,7 @@ module.exports = {
                 }
             })
         } else if (channel) {
-            database.query("SELECT password, hue FROM accounts WHERE name = '" + request.query.name + "';").then(function(selection) {
+            database.query("SELECT password, hue FROM gridcool.accounts WHERE name = '" + request.query.name + "';").then(function(selection) {
                 if (selection[0][0]) {
                     if (bcryptjs.compareSync(request.query.password, selection[0][0].password)) {
                         request.query.hue = selection[0][0].hue
@@ -152,7 +150,7 @@ module.exports = {
                         }
                     }
                     database.query(`
-                        INSERT INTO matches (player1, hue1, player2, hue2, winner) VALUES
+                        INSERT INTO gridcool.matches (player1, hue1, player2, hue2, winner) VALUES
                             ('${tokens[request.query.token].name}', ${rooms[tokens[request.query.token].room].hues[tokens[request.query.token].name]}, '${opponent}', ${rooms[tokens[request.query.token].room].hues[opponent]}, ${rooms[tokens[request.query.token].room].winner})
                         ;
                     `).then(function() {
@@ -168,26 +166,26 @@ module.exports = {
         let hue = Number(request.query.hue)
         if (hue > -1 && request.query.name && request.query.name.length < 9 && request.query.name[request.query.name.length - 1] !== " " && request.query.name[0] !== " ") {
             database.query(`
-                UPDATE matches SET hue1 = NULL WHERE fired = (
+                UPDATE gridcool.matches SET hue1 = NULL WHERE fired = (
                     SELECT MAX(fired) FROM (
-                        SELECT * FROM matches WHERE player1 = '${request.query.name}'
+                        SELECT * FROM gridcool.matches WHERE player1 = '${request.query.name}'
                         UNION
-                        SELECT * FROM matches WHERE player2 = '${request.query.name}'
+                        SELECT * FROM gridcool.matches WHERE player2 = '${request.query.name}'
                     ) AS records
                 ) AND player1 = '${request.query.name}' AND NOT EXISTS (
-                    SELECT name FROM accounts WHERE name = '${request.query.name}'
+                    SELECT name FROM gridcool.accounts WHERE name = '${request.query.name}'
                 );
-                UPDATE matches SET hue2 = NULL WHERE fired = (
+                UPDATE gridcool.matches SET hue2 = NULL WHERE fired = (
                     SELECT MAX(fired) FROM (
-                        SELECT * FROM matches WHERE player1 = '${request.query.name}'
+                        SELECT * FROM gridcool.matches WHERE player1 = '${request.query.name}'
                         UNION
-                        SELECT * FROM matches WHERE player2 = '${request.query.name}'
+                        SELECT * FROM gridcool.matches WHERE player2 = '${request.query.name}'
                     ) AS records
                 ) AND player2 = '${request.query.name}' AND NOT EXISTS (
-                    SELECT name FROM accounts WHERE name = '${request.query.name}'
+                    SELECT name FROM gridcool.accounts WHERE name = '${request.query.name}'
                 );
-                INSERT INTO accounts (name, password, hue) SELECT '${request.query.name}', '${bcryptjs.hashSync(request.query.password)}', ${hue} WHERE NOT EXISTS (
-                    SELECT name FROM accounts WHERE name = '${request.query.name}'
+                INSERT INTO gridcool.accounts (name, password, hue) SELECT '${request.query.name}', '${bcryptjs.hashSync(request.query.password)}', ${hue} WHERE NOT EXISTS (
+                    SELECT name FROM gridcool.accounts WHERE name = '${request.query.name}'
                 );
             `).then(function() {
                 response.send()
@@ -195,27 +193,27 @@ module.exports = {
         }
     },
     "getAccount": function(request, response) {
-        database.query("SELECT password FROM accounts WHERE name = '" + request.query.name + "';").then(function(selection) {
+        database.query("SELECT password FROM gridcool.accounts WHERE name = '" + request.query.name + "';").then(function(selection) {
             if (request.query.password && selection[0][0]) {
                 response.send([bcryptjs.compareSync(request.query.password, selection[0][0].password)])
             }
         })
     },
     "putAccount": function(request, response) {
-        database.query("SELECT password FROM accounts WHERE name = '" + request.query.name + "';").then(function(selection) {
+        database.query("SELECT password FROM gridcool.accounts WHERE name = '" + request.query.name + "';").then(function(selection) {
             if (request.query.password && selection[0][0] && bcryptjs.compareSync(request.query.password, selection[0][0].password)) {
-                database.query("UPDATE accounts SET password = '" + bcryptjs.hashSync(request.query.updated) + "' WHERE name = '" + request.query.name + "';").then(function() {
+                database.query("UPDATE gridcool.accounts SET password = '" + bcryptjs.hashSync(request.query.updated) + "' WHERE name = '" + request.query.name + "';").then(function() {
                     response.send()
                 })
             }
         })
     },
     "deleteAccount": function(request, response) {
-        database.query("SELECT password FROM accounts WHERE name = '" + request.query.name + "';").then(function(selection) {
+        database.query("SELECT password FROM gridcool.accounts WHERE name = '" + request.query.name + "';").then(function(selection) {
             if (request.query.password && selection[0][0] && bcryptjs.compareSync(request.query.password, selection[0][0].password)) {
                 database.query(`
-                    DELETE FROM matches WHERE (player1 = '${request.query.name}' AND hue1 IS NULL) OR (player2 = '${request.query.name}' AND hue2 IS NULL);
-                    DELETE FROM accounts WHERE name = '${request.query.name}';
+                    DELETE FROM gridcool.matches WHERE (player1 = '${request.query.name}' AND hue1 IS NULL) OR (player2 = '${request.query.name}' AND hue2 IS NULL);
+                    DELETE FROM gridcool.accounts WHERE name = '${request.query.name}';
                 `).then(function() {
                     response.send()
                 })
@@ -223,15 +221,15 @@ module.exports = {
         })
     },
     "records": function(request, response) {
-        database.query("SELECT password FROM accounts WHERE name = '" + request.query.name + "';").then(function(selection) {
+        database.query("SELECT password FROM gridcool.accounts WHERE name = '" + request.query.name + "';").then(function(selection) {
             if (request.query.password && selection[0][0] && bcryptjs.compareSync(request.query.password, selection[0][0].password)) {
                 database.query(`
-                    SELECT fired, player1, hue, winner FROM matches
-                        JOIN accounts ON player1 = name WHERE player2 = '${request.query.name}' AND hue1 IS NULL AND hue2 IS NULL;
-                    SELECT fired, player2, hue, winner FROM matches
-                        JOIN accounts ON player2 = name WHERE player1 = '${request.query.name}' AND hue2 IS NULL AND hue1 IS NULL;
-                    SELECT fired, player1, hue1, winner FROM matches WHERE player2 = '${request.query.name}' AND hue1 IS NOT NULL AND hue2 IS NULL;
-                    SELECT fired, player2, hue2, winner FROM matches WHERE player1 = '${request.query.name}' AND hue2 IS NOT NULL AND hue1 IS NULL;
+                    SELECT fired, player1, hue, winner FROM gridcool.matches
+                        JOIN gridcool.accounts ON player1 = name WHERE player2 = '${request.query.name}' AND hue1 IS NULL AND hue2 IS NULL;
+                    SELECT fired, player2, hue, winner FROM gridcool.matches
+                        JOIN gridcool.accounts ON player2 = name WHERE player1 = '${request.query.name}' AND hue2 IS NULL AND hue1 IS NULL;
+                    SELECT fired, player1, hue1, winner FROM gridcool.matches WHERE player2 = '${request.query.name}' AND hue1 IS NOT NULL AND hue2 IS NULL;
+                    SELECT fired, player2, hue2, winner FROM gridcool.matches WHERE player1 = '${request.query.name}' AND hue2 IS NOT NULL AND hue1 IS NULL;
                 `).then(function(selection) {
                     response.send(selection[0])
                 })
@@ -239,10 +237,10 @@ module.exports = {
         })
     },
     "hue": function(request, response) {
-        database.query("SELECT password FROM accounts WHERE name = '" + request.query.name + "';").then(function(selection) {
+        database.query("SELECT password FROM gridcool.accounts WHERE name = '" + request.query.name + "';").then(function(selection) {
             let hue = Number(request.query.hue)
             if (hue > -1 && request.query.password && selection[0][0] && bcryptjs.compareSync(request.query.password, selection[0][0].password)) {
-                database.query("UPDATE accounts SET hue = " + hue + " WHERE name = '" + request.query.name + "';").then(function() {
+                database.query("UPDATE gridcool.accounts SET hue = " + hue + " WHERE name = '" + request.query.name + "';").then(function() {
                     response.send()
                 })
             }
